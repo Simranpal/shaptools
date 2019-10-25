@@ -58,3 +58,37 @@ class TestInit(unittest.TestCase):
         with self.assertRaises(base_connector.DriverNotAvailableError) as err:
             hdb_connector.HdbConnector()
         self.assertTrue('dbapi nor pyhdb are installed' in str(err.exception))
+
+class TestHdbConnector(unittest.TestCase):
+    """
+    Unitary tests for __init__.py HdbConnector class
+    """
+    @classmethod
+    def setUpClass(cls):
+        """
+        Global setUp.
+        """
+
+        logging.basicConfig(level=logging.INFO)
+
+    def setUp(self):
+        """
+        Test setUp.
+        """
+
+    def tearDown(self):
+        """
+        Test tearDown.
+        """
+
+    @classmethod
+    def tearDownClass(cls):
+        """
+        Global tearDown.
+        """
+
+    def test_new(self):
+        from shaptools import hdb_connector
+        with self.assertRaises(base_connector.DriverNotAvailableError) as err:
+            hdb_connector.HdbConnector()
+        self.assertTrue('dbapi nor pyhdb are installed' in str(err.exception))
