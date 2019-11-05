@@ -7,12 +7,14 @@ Module to interact with the shell commands.
 
 :since: 2018-11-15
 """
+from __future__ import print_function
 
 import logging
 import os
 import subprocess
 import shlex
 import re
+import fileinput
 
 LOGGER = logging.getLogger('shell')
 ASKPASS_SCRIPT = 'support/ssh_askpass'
@@ -187,3 +189,28 @@ def remove_user(user, force=False, root_user=None, root_password=None, remote_ho
         else:
             break
     raise ShellError('error removing user {}'.format(user))
+
+def update_conf_file(conf_file, **kwargs):
+    """
+    Update HANA or NW installation config file parameters. Add the parameters if they don't exist
+
+    Args:
+        conf_file (str): Path to the HANA/netweaver installation configuration file
+        kwargs (opt): Dictionary with the values to be updated.
+            Use the exact name of the netweaver configuration file
+
+    kwargs can be used in the next two modes:
+        update_conf_file(conf_file, sid='HA1', hostname='hacert01')
+        update_conf_file(conf_file, **{'sid': 'HA1', 'hostname': 'hacert01'})
+    """
+    for key, value in kwargs.items():
+        pattern = '{key}(\s*)=.*'.format(key=key)
+        new_value = '{key} = {value}'.format(key=key, value=value)
+        with open(conf_file, 'r+') as file_cache:
+            if key in file_cache.read():
+                for line in fileinput.input(conf_file, inplace=1):
+                    line = re.sub(pattern, new_value, line)
+                    print(line, end='')
+            else:
+                file_cache.write('\n'+new_value)
+    return conf_file

@@ -17,6 +17,8 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 import logging
 import unittest
 import subprocess
+import shutil
+import filecmp
 
 try:
     from unittest import mock
@@ -291,3 +293,31 @@ class TestShell(unittest.TestCase):
             mock.call('userdel user', 'root', 'pass', None)
         ])
         self.assertTrue('error removing user user' in str(err.exception))
+
+    def test_update_conf_file(self):
+        pwd = os.path.dirname(os.path.abspath(__file__))
+        #Test modifying HANA config file
+        shutil.copyfile(pwd+'/support/original.conf', '/tmp/copy.conf')
+        hana_conf_file = shell.update_conf_file(
+            '/tmp/copy.conf', sid='PRD',
+            password='Qwerty1234', system_user_password='Qwerty1234')
+        self.assertTrue(filecmp.cmp(pwd+'/support/modified.conf', hana_conf_file))
+
+        shutil.copyfile(pwd+'/support/original.conf', '/tmp/copy.conf')
+        hana_conf_file = shell.update_conf_file(
+            '/tmp/copy.conf',
+            **{'sid': 'PRD', 'password': 'Qwerty1234', 'system_user_password': 'Qwerty1234'})
+        self.assertTrue(filecmp.cmp(pwd+'/support/modified.conf', hana_conf_file))
+        
+        #Test modifying NW config file
+        shutil.copyfile(pwd+'/support/original.inifile.params', '/tmp/copy.inifile.params')
+        conf_file = shell.update_conf_file(
+            '/tmp/copy.inifile.params', sid='HA1',
+            sidadmPassword='testpwd', masterPwd='Suse1234')
+        self.assertTrue(filecmp.cmp(pwd+'/support/modified.inifile.params', conf_file))
+        #case when new entry is added to config file
+        shutil.copyfile(pwd+'/support/original.inifile.params', '/tmp/copy.inifile.params')
+        conf_file = shell.update_conf_file(
+            '/tmp/copy.inifile.params',
+            **{'NW_HDB_getDBInfo.systemPassword': 'test1234'})
+        self.assertTrue(filecmp.cmp(pwd+'/support/new.inifile.params', conf_file))
